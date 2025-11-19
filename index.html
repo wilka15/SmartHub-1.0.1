@@ -1,70 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartHub AI</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #0b0f19, #1b2340);
+        color: white;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .chat-container {
+        width: 90%;
+        max-width: 600px;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(14px);
+        padding: 25px;
+        border-radius: 20px;
+        box-shadow: 0 0 25px rgba(0, 150, 255, 0.4);
+        position: relative;
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 26px;
+        text-shadow: 0 0 10px #00d4ff;
+    }
+
+    #chat {
+        height: 300px;
+        overflow-y: auto;
+        padding: 10px;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.25);
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .msg {
+        display: flex;
+        gap: 10px;
+        max-width: 90%;
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .bubble {
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.1);
+        line-height: 1.35;
+    }
+
+    .user {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+    }
+
+    .user .bubble {
+        background: rgba(0, 150, 255, 0.6);
+        color: #001;
+    }
+
+    .ai .bubble {
+        background: rgba(100, 255, 150, 0.35);
+    }
+
+    .avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        overflow: hidden;
+        box-shadow: 0 0 10px rgba(0,255,200,0.5);
+    }
+
+    .avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .input-area {
+        display: flex;
+        gap: 10px;
+    }
+
+    #userInput {
+        flex: 1;
+        padding: 12px;
+        border-radius: 10px;
+        border: none;
+        font-size: 16px;
+    }
+
+    button {
+        padding: 12px 18px;
+        border: none;
+        border-radius: 10px;
+        background: #00d4ff;
+        color: black;
+        cursor: pointer;
+        font-weight: bold;
+        transition: 0.2s;
+    }
+
+    button:hover {
+        transform: scale(1.05);
+        background: #00f6ff;
+    }
+
+    #micBtn {
+        background: #ff3b3b;
+    }
+
+    #speakBtn {
+        background: #00ff99;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="chat-container">
+    <h2>SmartHub AI</h2>
+
+    <div id="chat"></div>
+
+    <div class="input-area">
+        <input id="userInput" type="text" placeholder="Введите вопрос..." />
+        <button onclick="sendMessage()">➤</button>
+        <button id="micBtn" onclick="voiceInput()">🎤</button>
+        <button id="speakBtn" onclick="speakLast()">🔊</button>
+    </div>
+</div>
+
 <script>
-/* URL твоего прокси */
-const API_URL = "https://smarthub-proxy.onrender.com/v1/responses";
+const API_URL = "https://smarthub-proxy.onrender.com/v1/chat/completions";
 
-/* Хранение последнего текста */
-let lastAIMessage = "";
-let speakingUtterance = null;
+let lastAIMessage = ""; // текст последнего ответа
 
-/* Настройки */
-let voiceGender = "female"; // по умолчанию: женский голос
-
-/* ---------- МЕНЮ НАСТРОЕК ---------- */
-function toggleSettings(){
-    let menu = document.getElementById("settingsMenu");
-    menu.style.display = menu.style.display === "block" ? "none" : "block";
-}
-
-function setVoice(gender){
-    voiceGender = gender;
-    alert("Голос изменён: " + (gender === "female" ? "Женский" : "Мужской"));
-}
-
-/* ---------- ТЕКСТ + АВАТАРЫ + ТИПИНГ ---------- */
-function addMessage(text, role, typing=false) {
-    const chat = document.getElementById("chat");
-
-    const wrap = document.createElement("div");
-    wrap.className = "msg " + role;
-
-    const avatar = document.createElement("div");
-    avatar.className = "avatar";
-
-    const img = document.createElement("img");
-    img.src = role === "user" ? "avatar-user.png" : "avatar-ai.png";
-    avatar.appendChild(img);
-
-    const bubble = document.createElement("div");
-    bubble.className = "bubble";
-
-    if (typing && role === "ai") {
-        bubble.innerHTML = `
-            <div class="typing">
-                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-            </div>`;
-        avatar.classList.add("speaking");
-    } else {
-        bubble.textContent = text;
-    }
-
-    wrap.appendChild(avatar);
-    wrap.appendChild(bubble);
-    chat.appendChild(wrap);
-    chat.scrollTop = chat.scrollHeight;
-
-    return {wrap, avatar, bubble};
-}
-
-/* ---------- ПЕЧАТНАЯ АНИМАЦИЯ ---------- */
-async function typeText(element, text, speed = 25){
-    element.textContent = "";
-    for (let i = 0; i < text.length; i++){
-        element.textContent += text[i];
-        await new Promise(r => setTimeout(r, speed));
-    }
-}
-
-/* ---------- ОТПРАВКА СООБЩЕНИЯ ---------- */
+// ОТПРАВКА СООБЩЕНИЯ
 async function sendMessage() {
     const input = document.getElementById("userInput");
     const text = input.value.trim();
@@ -73,73 +162,87 @@ async function sendMessage() {
     addMessage(text, "user");
     input.value = "";
 
-    // Индикатор печати
-    const t = addMessage("", "ai", true);
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                model: "gpt-4o-mini",
+                messages: [{ role: "user", content: text }]
+            })
+        });
 
-    const res = await fetch(API_URL, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            model: "gpt-4o-mini",
-            input: text
-        })
-    });
+        const data = await response.json();
 
-    const data = await res.json();
+        if (!data.choices) {
+            addMessage("Ошибка: сервер не вернул ответ.", "ai");
+            return;
+        }
 
-    t.avatar.classList.remove("speaking");
-    t.bubble.innerHTML = "";
+        const ai = data.choices[0].message.content;
 
-    const ai = data.output[0].content[0].text;
-    lastAIMessage = ai;
+        lastAIMessage = ai; // сохраняем текст для озвучки
+        addMessage(ai, "ai");
 
-    // печать текста по буквам
-    await typeText(t.bubble, ai, 18);
+    } catch (e) {
+        addMessage("Ошибка подключения к серверу.", "ai");
+    }
 }
 
-/* ---------- ОЗВУЧКА ---------- */
+// ДОБАВИТЬ СООБЩЕНИЕ
+function addMessage(text, sender) {
+    const chat = document.getElementById("chat");
+
+    const wrap = document.createElement("div");
+    wrap.className = "msg " + sender;
+
+    // АВАТАР
+    const avatar = document.createElement("div");
+    avatar.className = "avatar";
+
+    const img = document.createElement("img");
+    img.src = sender === "user" ? "avatar-user.png" : "avatar-ai.png";
+    avatar.appendChild(img);
+
+    // ТЕКСТ
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = text;
+
+    wrap.appendChild(avatar);
+    wrap.appendChild(bubble);
+
+    chat.appendChild(wrap);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+// ОЗВУЧИТЬ ПО КНОПКЕ
 function speakLast(){
     if (!lastAIMessage) return alert("Нет текста для озвучки");
     speak(lastAIMessage);
 }
 
-function speak(text){
-  stopSpeech();
-
-  const synth = window.speechSynthesis;
-  if(!synth) return;
-
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'ru-RU';
-  u.rate = 1;
-  u.pitch = voiceGender === "female" ? 1 : 0.3;
-
-  speakingUtterance = u;
-  synth.speak(u);
-
-  u.onend = () => { speakingUtterance = null; };
+// ОЗВУЧКА
+function speak(text) {
+    const synth = window.speechSynthesis;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "ru-RU";
+    utter.rate = 1.0;
+    synth.speak(utter);
 }
 
-function stopSpeech(){
-  const s = window.speechSynthesis;
-  if(s && s.speaking){
-      s.cancel();
-      speakingUtterance = null;
-  }
-}
-
-/* ---------- ГОЛОСОВОЙ ВВОД ---------- */
+// ГОЛОСОВОЙ ВВОД
 function voiceInput() {
-    const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Rec) return alert("Браузер не поддерживает распознавание речи");
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return alert("Браузер не поддерживает микрофон");
 
-    const rec = new Rec();
+    const rec = new SR();
     rec.lang = "ru-RU";
     rec.start();
 
     document.getElementById("micBtn").style.background = "#ffa200";
 
-    rec.onresult = e => {
+    rec.onresult = (e) => {
         document.getElementById("userInput").value = e.results[0][0].transcript;
     };
 
@@ -148,3 +251,6 @@ function voiceInput() {
     };
 }
 </script>
+
+</body>
+</html>
