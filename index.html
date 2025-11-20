@@ -1,382 +1,373 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>SmartHub AI v1.0.4</title>
-
 <style>
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    transition: .3s;
+/* ---------- базовая тема ---------- */
+:root{
+  --bg:#0b0f19; --panel:rgba(255,255,255,0.04); --accent:#00d4ff; --muted:rgba(255,255,255,0.6);
+  --input:#0e1218; --bubble-user:#00d4ff; --bubble-ai:rgba(0,255,170,0.18); --danger:#ff3b3b;
 }
-body.dark { background: #0b0f19; color: white; }
-body.light { background: #f3f3f3; color: #111; }
+body{margin:0;font-family:Inter, system-ui, Arial, sans-serif;background:var(--bg);color:#eef;min-height:100vh;}
 
-.layout {
-    display: flex;
-    height: 100vh;
-}
-
-/* ЛЕВАЯ ПАНЕЛЬ */
-.chat-panel {
-    flex: 3;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-}
-.title {
-    text-align: center;
-    margin-top: 0;
-    text-shadow: 0 0 10px #00d4ff;
-}
-#chat {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 10px;
-}
-.msg {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 12px;
-}
-.msg-avatar {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-}
-.bubble {
-    padding: 10px 14px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 10px;
-    max-width: 75%;
-}
-.msg.user .bubble { background: #00d4ff; color: #002; margin-left: auto; }
-.msg.ai .bubble { background: rgba(0,255,170,0.3); }
-
-.input-area {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-}
-input {
-    flex: 1;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    font-size: 16px;
-}
-button {
-    padding: 12px 16px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: .2s;
-}
-button:hover { transform: scale(1.07); }
-
-.version {
-    margin-top: 10px;
-    opacity: .6;
-    text-align: center;
+/* layout */
+.app{
+  display:grid;
+  grid-template-columns: 1fr 360px;
+  gap:18px;
+  padding:20px;
+  box-sizing:border-box;
+  height:100vh;
+  align-items:stretch;
 }
 
-/* ПРАВАЯ ПАНЕЛЬ */
-.settings-panel {
-    flex: 1;
-    background: rgba(255,255,255,0.07);
-    backdrop-filter: blur(12px);
-    padding: 20px;
-    display: none;
-    flex-direction: column;
+/* CHAT PANEL */
+.panel{
+  background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+  border-radius:14px;
+  padding:18px;
+  display:flex;flex-direction:column; gap:12px;
+  box-shadow:0 8px 30px rgba(0,0,0,0.6);
 }
-.settings-panel.show { display: flex; }
-
-.settings-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    padding: 12px;
-    border-radius: 50%;
-    background: #00d4ff;
+.header{
+  text-align:center; font-weight:700; font-size:20px; color:var(--accent); text-shadow:0 6px 18px rgba(0,212,255,0.06);
 }
 
-/* Тогглер */
-.switch-label {
-    margin-top: 10px;
-    display: block;
+/* chat area */
+.chat-window{
+  background:var(--panel);
+  border-radius:10px;
+  padding:12px;
+  flex:1;
+  overflow:auto;
+  min-height:120px;
 }
-.switch {
-    position: relative;
-    width: 50px; height: 24px;
-    margin-top: 5px;
+.msg{
+  display:flex; gap:12px; align-items:flex-start; margin-bottom:12px;
+  opacity:1; transition:all .18s ease;
 }
-.switch input { display: none; }
-.slider {
-    position: absolute;
-    cursor: pointer;
-    background: #ccc;
-    border-radius: 24px;
-    top: 0; left: 0; right: 0; bottom: 0;
+.msg .avatar{
+  width:54px;height:54px;border-radius:50%;flex:0 0 54px;overflow:hidden;display:flex;align-items:center;justify-content:center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
 }
-.slider:before {
-    content: "";
-    position: absolute;
-    width: 20px; height: 20px;
-    background: white; border-radius: 50%;
-    top: 2px; left: 2px;
-    transition: .3s;
+.bubble{
+  padding:12px 14px;border-radius:12px;max-width:78%;line-height:1.35;
+  background:rgba(255,255,255,0.04);
 }
-input:checked + .slider { background: #00d4ff; }
-input:checked + .slider:before { transform: translateX(26px); }
 
-/* Аватарки */
-.avatar-select { margin-top: 10px; }
-.avatar-preview {
-    width: 70px; height: 70px;
-    border-radius: 50%;
-    border: 3px solid #00d4ff;
-    margin-bottom: 10px;
+/* user vs ai */
+.msg.user{justify-content:flex-end; flex-direction:row-reverse;}
+.msg.user .bubble{background:var(--bubble-user); color:#002;}
+.msg.user .avatar{box-shadow:none;}
+.msg.ai .bubble{background:var(--bubble-ai); color:#e9fff0;}
+
+/* input row */
+.input-row{display:flex; gap:10px; align-items:center}
+.input-row input{
+  flex:1; padding:12px 14px; border-radius:12px; border:none; background:var(--input); color:inherit;
+  outline:none; box-shadow:inset 0 -2px 0 rgba(0,0,0,0.5);
 }
-.avatar-options {
-    display: flex; gap: 10px;
+.icon-btn{
+  width:48px;height:48px;border-radius:10px;border:none;background:var(--accent);cursor:pointer;color:#002;font-weight:700;
+  display:inline-flex;align-items:center;justify-content:center;
 }
-.avatar-option {
-    width: 55px; height: 55px;
-    border-radius: 50%;
-    opacity: .7; cursor: pointer;
-    transition: .2s;
-    border: 2px solid transparent;
+.small-btn{width:44px;height:44px;border-radius:10px;border:none;background:#222;color:#ddd;display:inline-flex;align-items:center;justify-content:center;}
+
+/* settings panel */
+.settings{
+  background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+  border-radius:14px;padding:18px; display:flex;flex-direction:column; gap:12px;
 }
-.avatar-option:hover {
-    opacity: 1;
-    transform: scale(1.1);
-    border-color: #00d4ff;
-}
-.close-btn {
-    margin-top: auto;
-    padding: 12px;
-    background: #ff3b3b;
-}
-.clear-btn {
-    padding: 12px;
-    background: #ff7b00;
-    border-radius: 10px;
-    margin-bottom: 10px;
-}
-.clear-btn:hover {
-    background: #ff9900;
+.settings h3{margin:0 0 6px 0; color:var(--accent);}
+.field{display:flex;flex-direction:column;gap:8px;font-size:14px;margin-bottom:6px;}
+.select, .switch, select{padding:8px;border-radius:8px;border:none;background:#0e1218;color:inherit;}
+.avatar-select{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.avatar-preview{width:72px;height:72px;border-radius:50%;border:3px solid var(--accent);display:block;object-fit:cover;}
+.avatar-option{width:52px;height:52px;border-radius:50%;cursor:pointer;border:2px solid transparent;opacity:.85;transition:all .12s ease}
+.avatar-option:hover{transform:scale(1.06);border-color:var(--accent);opacity:1}
+
+/* controls bottom */
+.footer{display:flex;justify-content:space-between;align-items:center;padding-top:6px;font-size:13px;opacity:.85}
+.version{margin-left:auto;}
+
+/* utility */
+.hidden{display:none}
+.small-muted{font-size:13px;color:var(--muted);opacity:.9}
+.hr{height:1px;background:rgba(255,255,255,0.03);margin:8px 0;border-radius:2px}
+
+/* responsive */
+@media(max-width:980px){
+  .app{grid-template-columns:1fr; padding:12px;}
+  .settings{order:-1}
 }
 </style>
-
 </head>
-<body class="dark">
+<body>
+<div class="app">
 
-<div class="layout">
+  <!-- CHAT -->
+  <div class="panel">
+    <div class="header">SmartHub AI</div>
 
-    <!-- ЧАТ -->
-    <div class="chat-panel">
-        <h2 class="title">SmartHub AI</h2>
+    <div id="chat" class="chat-window" aria-live="polite" role="log"></div>
 
-        <div id="chat"></div>
-
-        <div class="input-area">
-            <input id="userInput" type="text" placeholder="Введите сообщение..." />
-            <button onclick="sendMessage()">➤</button>
-            <button onclick="voiceInput()">🎤</button>
-            <button onclick="speakLast()">🔊</button>
-        </div>
-
-        <div class="version">SmartHub AI v1.0.4</div>
+    <div class="input-row">
+      <input id="userInput" placeholder="Введите сообщение..." autocomplete="off" />
+      <button class="icon-btn" id="sendBtn" title="Отправить">➤</button>
+      <button class="small-btn" id="micBtn" title="Голосовой ввод">🎤</button>
+      <button class="small-btn" id="speakBtn" title="Озвучить">🔊</button>
     </div>
 
-    <!-- НАСТРОЙКИ -->
-    <div class="settings-panel" id="settingsPanel">
-        <h3>⚙ Настройки</h3>
+    <div class="footer">
+      <div class="small-muted">Сохранено в браузере</div>
+      <div class="version">SmartHub AI v1.0.4</div>
+    </div>
+  </div>
 
-        <label class="switch-label">Тема</label>
-        <label class="switch">
-            <input type="checkbox" id="themeSwitch" onchange="toggleTheme()">
-            <span class="slider"></span>
-        </label>
+  <!-- SETTINGS -->
+  <aside class="settings" id="settingsPanel">
+    <h3>⚙ Настройки</h3>
 
-        <hr>
-
-        <label class="switch-label">Голос</label>
-        <select id="voiceSelect">
-            <option value="female">Женский</option>
-            <option value="male">Мужской</option>
-        </select>
-
-        <hr>
-
-        <label class="switch-label">Аватар пользователя</label>
-        <div class="avatar-select">
-            <img id="avatarPreview" src="user1.png" class="avatar-preview">
-            <div class="avatar-options">
-                <img src="user1.png" class="avatar-option" onclick="setUserAvatar('user1.png')">
-                <img src="user2.png" class="avatar-option" onclick="setUserAvatar('user2.png')">
-                <img src="user3.png" class="avatar-option" onclick="setUserAvatar('user3.png')">
-            </div>
-        </div>
-
-        <hr>
-
-        <button class="clear-btn" onclick="clearChat()">🗑 Очистить чат</button>
-        <button class="close-btn" onclick="toggleSettings()">Закрыть</button>
+    <div class="field">
+      <label class="small-muted">Тема оформления</label>
+      <label style="display:flex;align-items:center;gap:12px">
+        <input type="checkbox" id="themeSwitch" />
+        <span class="small-muted">Светлая тема</span>
+      </label>
     </div>
 
-    <button class="settings-btn" onclick="toggleSettings()">☰</button>
+    <div class="field">
+      <label class="small-muted">Озвучка</label>
+      <select id="voiceSelect" class="select">
+        <option value="female">Женский голос</option>
+        <option value="male">Мужской голос</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="small-muted">Аватар пользователя</label>
+      <img id="avatarPreview" class="avatar-preview" alt="avatar preview" />
+      <div class="avatar-select" id="avatarOptions"></div>
+    </div>
+
+    <div class="hr"></div>
+
+    <button id="clearBtn" style="padding:12px;background:#ff7b00;border:none;border-radius:10px;color:#001;font-weight:700;cursor:pointer">🗑 Очистить чат</button>
+    <div class="small-muted" style="margin-top:10px">Параметры сохраняются в браузере</div>
+  </aside>
 
 </div>
 
 <script>
-const API_URL = "https://openai-proxy-ucgy.onrender.com/v1/responses";
+/* ================= CONFIG - change API URL to your working proxy ================= */
+const API_URL = "https://openai-proxy-ucgy.onrender.com/v1/responses"; // <-- проверь свой URL здесь
+/* ================================================================================= */
 
-let lastAIMessage = "";
-let userAvatar = localStorage.getItem("userAvatar") || "user1.png";
-let chatHistory = JSON.parse(localStorage.getItem("chatHistory") || "[]");
+/* ----- state ----- */
+let userAvatar = localStorage.getItem('sh_userAvatar') || 'svg:user:1';
+let chatHistory = JSON.parse(localStorage.getItem('sh_chatHistory') || '[]');
+let lastAI = "";
 
-/* ---------- ОТПРАВКА ---------- */
-async function sendMessage() {
-    const input = document.getElementById("userInput");
-    const text = input.value.trim();
-    if (!text) return;
-    input.value = "";
+/* ----- built-in SVG avatars (no external images) ----- */
+const AVATARS = {
+  'svg:user:1': `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><linearGradient id='g1' x1='0' x2='1'><stop offset='0' stop-color='#00d4ff'/><stop offset='1' stop-color='#00ffa3'/></linearGradient></defs><rect width='120' height='120' rx='24' fill='url(#g1)'/><g fill='#001' opacity='0.14'><circle cx='60' cy='44' r='20'/><rect x='20' y='74' width='80' height='28' rx='12'/></g><circle cx='60' cy='44' r='18' fill='#fff' opacity='0.15'/></svg>`,
+  'svg:user:2': `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><linearGradient id='g2' x1='0' x2='1'><stop offset='0' stop-color='#7b61ff'/><stop offset='1' stop-color='#ff61b8'/></linearGradient></defs><rect width='120' height='120' rx='24' fill='url(#g2)'/><g fill='#001' opacity='0.14'><circle cx='60' cy='44' r='20'/></g></svg>`,
+  'svg:user:3': `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><linearGradient id='g3' x1='0' x2='1'><stop offset='0' stop-color='#ffb86b'/><stop offset='1' stop-color='#ff6b6b'/></linearGradient></defs><rect width='120' height='120' rx='24' fill='url(#g3)'/></svg>`,
+  'svg:ai:1': `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><rect width='120' height='120' rx='24' fill='#0de7c9'/><circle cx='36' cy='44' r='18' fill='#fff' opacity='.85'/><circle cx='84' cy='44' r='18' fill='#fff' opacity='.65'/></svg>`
+};
 
-    addMessage(text, "user");
+/* ----- helper to render SVG avatar inline (data URL) ----- */
+function svgToDataUrl(svg){
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
 
-    const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            model: "gpt-4o-mini",
-            input: text
-        })
+/* ----- render avatars selection UI ----- */
+function buildAvatarOptions(){
+  const container = document.getElementById('avatarOptions');
+  container.innerHTML = '';
+  Object.keys(AVATARS).forEach(key=>{
+    if(!key.startsWith('svg:user')) return;
+    const img = document.createElement('img');
+    img.src = svgToDataUrl(AVATARS[key]);
+    img.className = 'avatar-option';
+    img.title = key;
+    img.addEventListener('click', ()=>{ setUserAvatar(key); });
+    container.appendChild(img);
+  });
+  // preview
+  document.getElementById('avatarPreview').src = svgToDataUrl(AVATARS[userAvatar] || AVATARS['svg:user:1']);
+}
+
+/* ----- chat rendering & persistence ----- */
+const chatEl = document.getElementById('chat');
+
+function renderMessage(item){
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + (item.role==='user'?'user':'ai');
+  const av = document.createElement('div'); av.className='avatar';
+  const img = document.createElement('img'); img.className='avatar-img';
+  img.src = item.avatar; img.alt = item.role;
+  img.style.width='54px'; img.style.height='54px'; img.style.borderRadius='50%';
+  av.appendChild(img);
+  const bubble = document.createElement('div'); bubble.className='bubble';
+  bubble.textContent = item.text;
+  wrap.appendChild(av); wrap.appendChild(bubble);
+  chatEl.appendChild(wrap);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+function saveAndRenderMessage(text, role){
+  const avatarData = role==='user' ? svgToDataUrl(AVATARS[userAvatar]) : svgToDataUrl(AVATARS['svg:ai:1']);
+  const item = {text, role, avatar: avatarData, at: Date.now()};
+  chatHistory.push(item);
+  localStorage.setItem('sh_chatHistory', JSON.stringify(chatHistory));
+  renderMessage(item);
+}
+
+/* ----- load history on start ----- */
+function loadHistory(){
+  chatEl.innerHTML=''; 
+  chatHistory.forEach(renderMessage);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+/* ----- clear chat ----- */
+function clearChat(){
+  if(!confirm('Очистить весь чат?')) return;
+  chatHistory = [];
+  localStorage.removeItem('sh_chatHistory');
+  chatEl.innerHTML = '';
+  lastAI = '';
+  alert('Чат очищен');
+}
+
+/* ----- set user avatar ----- */
+function setUserAvatar(key){
+  if(!AVATARS[key]) return;
+  userAvatar = key;
+  localStorage.setItem('sh_userAvatar', userAvatar);
+  buildAvatarOptions();
+}
+
+/* ----- speak (single button) ----- */
+function speakText(text){
+  if(!text) return;
+  const synth = window.speechSynthesis;
+  if(!synth) return;
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'ru-RU';
+  // pick voice loosely
+  const pref = document.getElementById('voiceSelect').value;
+  const voices = speechSynthesis.getVoices();
+  if(pref==='male'){
+    utter.voice = voices.find(v=>/male|man|sergei|alex/i.test(v.name)) || voices[0];
+  } else {
+    utter.voice = voices.find(v=>/female|woman|zira|salli/i.test(v.name)) || voices[0];
+  }
+  synth.cancel();
+  synth.speak(utter);
+}
+
+/* ----- voice input ----- */
+function startSpeechToText(){
+  const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!Rec){ alert('Голосовой ввод не поддерживается в этом браузере'); return; }
+  const r = new Rec();
+  r.lang='ru-RU';
+  r.onresult = e=>{
+    const text = e.results[0][0].transcript;
+    document.getElementById('userInput').value = text;
+  };
+  r.onerror = ()=>{ /* ignore */ };
+  r.start();
+}
+
+/* ----- send message to proxy and handle response ----- */
+async function sendToProxy(text){
+  // show typing indicator
+  saveAndRenderMessage('...', 'ai');
+  try{
+    const resp = await fetch(API_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'gpt-4o-mini', input: text })
     });
-
-    const data = await response.json();
-    const ai = data.output[0].content[0].text;
-
-    addMessage(ai, "ai");
-    lastAIMessage = ai;
+    if(!resp.ok){
+      // remove last '...' message and replace with error
+      chatHistory.pop();
+      localStorage.setItem('sh_chatHistory', JSON.stringify(chatHistory));
+      saveAndRenderMessage('Ошибка сервера: ' + resp.status + ' ' + resp.statusText, 'ai');
+      return;
+    }
+    const data = await resp.json();
+    // support both old choices and responses.output
+    let answer = null;
+    if(data.output && Array.isArray(data.output) && data.output[0] && data.output[0].content){
+      // responses format
+      const chunks = data.output[0].content;
+      // try to get text
+      const textChunk = chunks.find(c=>c.type==='output_text') || chunks.find(c=>c.type==='message');
+      answer = textChunk ? (textChunk.text || textChunk.parts && textChunk.parts.join('') || textChunk.content) : null;
+    }
+    if(!answer && data.choices && data.choices[0] && data.choices[0].message){
+      answer = data.choices[0].message.content || (data.choices[0].message && data.choices[0].message.content && data.choices[0].message.content.text);
+    }
+    if(!answer && typeof data === 'string') answer = data;
+    if(!answer) answer = 'Ошибка: неверный формат ответа от сервера';
+    // replace last '...' ai message
+    chatHistory.pop();
+    localStorage.setItem('sh_chatHistory', JSON.stringify(chatHistory));
+    saveAndRenderMessage(answer, 'ai');
+    lastAI = answer;
+  }catch(err){
+    chatHistory.pop();
+    localStorage.setItem('sh_chatHistory', JSON.stringify(chatHistory));
+    saveAndRenderMessage('Ошибка соединения с прокси/сервером', 'ai');
+    console.error(err);
+  }
 }
 
-/* ---------- ЧАТ + ПАМЯТЬ ---------- */
-function addMessage(text, role) {
-    const chat = document.getElementById("chat");
-
-    const wrap = document.createElement("div");
-    wrap.className = "msg " + role;
-
-    const avatar = document.createElement("img");
-    avatar.className = "msg-avatar";
-    avatar.src = role === "user" ? userAvatar : "avatar-ai.png";
-
-    const bubble = document.createElement("div");
-    bubble.className = "bubble";
-    bubble.textContent = text;
-
-    wrap.appendChild(avatar);
-    wrap.appendChild(bubble);
-    chat.appendChild(wrap);
-    chat.scrollTop = chat.scrollHeight;
-
-    chatHistory.push({
-        text,
-        role,
-        avatar: avatar.src
-    });
-    localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
-}
-
-/* Загрузка истории */
-function loadChat() {
-    chatHistory.forEach(msg => {
-        const wrap = document.createElement("div");
-        wrap.className = "msg " + msg.role;
-
-        const avatar = document.createElement("img");
-        avatar.src = msg.avatar;
-        avatar.className = "msg-avatar";
-
-        const bubble = document.createElement("div");
-        bubble.className = "bubble";
-        bubble.textContent = msg.text;
-
-        wrap.appendChild(avatar);
-        wrap.appendChild(bubble);
-
-        document.getElementById("chat").appendChild(wrap);
-    });
-}
-
-/* ---------- Озвучка ---------- */
-function speakLast() {
-    if (!lastAIMessage) return;
-    const utter = new SpeechSynthesisUtterance(lastAIMessage);
-    utter.lang = "ru-RU";
-
-    const v = document.getElementById("voiceSelect").value;
-    const voices = speechSynthesis.getVoices();
-    utter.voice = voices.find(x => x.name.toLowerCase().includes(v)) || null;
-
-    speechSynthesis.speak(utter);
-}
-
-/* ---------- Голосовой ввод ---------- */
-function voiceInput() {
-    const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Rec) return alert("Браузер не поддерживает распознавание речи");
-
-    const rec = new Rec();
-    rec.lang = "ru-RU";
-    rec.start();
-
-    rec.onresult = e => {
-        document.getElementById("userInput").value =
-            e.results[0][0].transcript;
-    };
-}
-
-/* ---------- Тема ---------- */
-function toggleTheme() {
-    document.body.classList.toggle("light");
-    document.body.classList.toggle("dark");
-}
-
-/* ---------- Меню ---------- */
-function toggleSettings() {
-    document.getElementById("settingsPanel").classList.toggle("show");
-}
-
-/* ---------- Аватар ---------- */
-function setUserAvatar(file) {
-    userAvatar = file;
-    localStorage.setItem("userAvatar", file);
-    document.getElementById("avatarPreview").src = file;
-}
-
-/* ---------- Очистка чата ---------- */
-function clearChat() {
-    if (!confirm("Очистить весь чат?")) return;
-
-    chatHistory = [];
-    localStorage.removeItem("chatHistory");
-    document.getElementById("chat").innerHTML = "";
-    lastAIMessage = "";
-}
-
-/* ---------- Старт ---------- */
-document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("avatarPreview").src = userAvatar;
-    loadChat();
+/* ----- event handlers ----- */
+document.getElementById('sendBtn').addEventListener('click', ()=>{
+  const txt = document.getElementById('userInput').value.trim();
+  if(!txt) return;
+  document.getElementById('userInput').value='';
+  saveAndRenderMessage(txt,'user');
+  sendToProxy(txt);
 });
-</script>
 
+document.getElementById('userInput').addEventListener('keydown', (e)=>{
+  if(e.key==='Enter') { e.preventDefault(); document.getElementById('sendBtn').click(); }
+});
+
+document.getElementById('micBtn').addEventListener('click', startSpeechToText);
+document.getElementById('clearBtn').addEventListener('click', clearChat);
+document.getElementById('speakBtn').addEventListener('click', ()=>speakText(lastAI));
+
+document.getElementById('themeSwitch').addEventListener('change', (e)=>{
+  const on = e.target.checked;
+  if(on){ document.body.classList.add('light'); document.body.classList.remove('dark'); }
+  else { document.body.classList.remove('light'); document.body.classList.add('dark'); }
+  localStorage.setItem('sh_theme_is_light', on? '1' : '0');
+});
+
+/* ----- init ----- */
+(function init(){
+  // avatars UI
+  buildAvatarOptions();
+  // load theme
+  const themeIsLight = localStorage.getItem('sh_theme_is_light') === '1';
+  if(themeIsLight){ document.getElementById('themeSwitch').checked = true; document.body.classList.add('light'); document.body.classList.remove('dark'); }
+  // load saved avatar
+  if(!AVATARS[userAvatar]) { userAvatar = 'svg:user:1'; localStorage.setItem('sh_userAvatar', userAvatar); }
+  document.getElementById('avatarPreview').src = svgToDataUrl(AVATARS[userAvatar]);
+  // load history
+  loadHistory();
+  // populate voices (some browsers load voices asynchronously)
+  window.speechSynthesis.onvoiceschanged = ()=>{ /* nothing needed, speak picks voices at call time */ };
+})();
+</script>
 </body>
 </html>
